@@ -1,0 +1,15 @@
+InlayHints:
+  # 代码块结尾的注释内联提示
+  BlockEnd: false
+  # 聚合初始化时的指示符内联提示
+  Designators: false
+  # 所有类型的内联提示
+  Enabled: true
+  # 函数参数的内联提示
+  ParameterNames: false
+  # 推导类型的内联提示
+  DeducedTypes: true
+  # 默认参数的内联提示
+  # DefaultArguments: false
+  # 类型名称的最大长度
+  TypeNameLimit: 24
