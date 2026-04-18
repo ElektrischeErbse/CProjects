@@ -2,13 +2,14 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <linked_list.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <string_view.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <string_view.h>
 
 struct Word {
     char data[32];
