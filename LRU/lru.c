@@ -58,6 +58,8 @@ size_t word_count(struct string_view content, struct Word *search_word)
     return result;
 }
 
+
+
 int main(int argc, char **argv)
 {
     if (argc < 2) {

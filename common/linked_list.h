@@ -21,6 +21,8 @@ struct list_node *list_push_front(struct list_node *root, void *data);
 
 struct list_node *list_move_to_front(struct list_node *root, struct list_node *node);
 
+struct list_node *list_find(struct list_node *root, void *data);
+
 struct list_node *destroy_linked_list(struct list_node *root);
 
 void traversal_linked_list(struct list_node *root, func f);

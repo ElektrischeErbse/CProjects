@@ -73,16 +73,29 @@ struct list_node *list_move_to_front(struct list_node *root, struct list_node *n
     return root;
 }
 
+struct list_node *list_find(struct list_node *root, void *data)
+{
+    if (root == NULL) {
+        return NULL;
+    }
+    struct list_node *p = root->next;
+    while (p != root && p) {
+        void *node_data = p->data;
+        if (node_data == data) {
+            return p;
+        }
+        p = p->next;
+    }
+    return NULL;
+}
+
 struct list_node *destroy_linked_list(struct list_node *root)
 {
     if (root == NULL) {
         return NULL;
     }
     struct list_node *p = root->next;
-    while (p != root) {
-        if (p == NULL) {
-            break;
-        }
+    while (p != root && p) {
         struct list_node *next_node = p->next;
         free(p);
         p = next_node;
@@ -100,10 +113,7 @@ void traversal_linked_list(struct list_node *root, func f)
         return;
     }
     struct list_node *p = root->next;
-    while (p != root) {
-        if (p == NULL) {
-            break;
-        }
+    while (p != root && p) {
         if (f) {
             f(p);
         }

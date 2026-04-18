@@ -23,6 +23,8 @@ int main()
     root = list_move_to_front(root, root->prev);
     printf("================================\n");
     traversal_linked_list(root, callback);
+    struct list_node *find_node = list_find(root, &arr[5]);
+    printf("find data: %d\n", *(int *) find_node->data);
     root = destroy_linked_list(root);
     printf("list size: %zu\n", list_size(root));
     return 0;
