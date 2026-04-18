@@ -100,7 +100,9 @@ void traversal_linked_list(struct list_node *root, func f)
         if (p == NULL) {
             break;
         }
-        f(p);
+        if (f) {
+            f(p);
+        }
         p = p->next;
     }
 }
