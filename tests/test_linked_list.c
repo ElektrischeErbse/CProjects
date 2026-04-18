@@ -18,6 +18,9 @@ int main()
         root = list_push_front(root, &arr[i]);
     }
     traversal_linked_list(root, &callback);
+    root = list_move_to_front(root, root->prev);
+    printf("================================\n");
+    traversal_linked_list(root, callback);
     destroy_linked_list(root);
     return 0;
 }

@@ -53,6 +53,23 @@ struct list_node *list_push_front(struct list_node *root, void *data)
     return root;
 }
 
+struct list_node *list_move_to_front(struct list_node *root, struct list_node *node)
+{
+    if (root == NULL || node == NULL) {
+        return root;
+    }
+    struct list_node *left = node->prev;
+    struct list_node *right = node->next;
+    struct list_node *head = root->next;
+    left->next = right;
+    right->prev = left;
+    head->prev = node;
+    node->next = head;
+    root->next = node;
+    node->prev = root;
+    return root;
+}
+
 void destroy_linked_list(struct list_node *root)
 {
     if (root == NULL) {
