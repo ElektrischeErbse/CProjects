@@ -1,2 +1,4 @@
 .vscode
-LRU/lru
+.cache
+build
+bin
