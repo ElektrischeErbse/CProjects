@@ -14,13 +14,16 @@ int main()
     for (int i = 0; i < 5; ++i) {
         root = list_push_back(root, &arr[i]);
     }
+    printf("list size: %zu\n", list_size(root));
     for (int i = 5; i < 10; ++i) {
         root = list_push_front(root, &arr[i]);
     }
+    printf("list size: %zu\n", list_size(root));
     traversal_linked_list(root, &callback);
     root = list_move_to_front(root, root->prev);
     printf("================================\n");
     traversal_linked_list(root, callback);
-    destroy_linked_list(root);
+    root = destroy_linked_list(root);
+    printf("list size: %zu\n", list_size(root));
     return 0;
 }

@@ -1,7 +1,10 @@
 #pragma once
 
+#include <stddef.h>
+
 struct list_node {
     void *data;
+    size_t size;
     struct list_node *prev;
     struct list_node *next;
 };
@@ -18,6 +21,8 @@ struct list_node *list_push_front(struct list_node *root, void *data);
 
 struct list_node *list_move_to_front(struct list_node *root, struct list_node *node);
 
-void destroy_linked_list(struct list_node *root);
+struct list_node *destroy_linked_list(struct list_node *root);
 
 void traversal_linked_list(struct list_node *root, func f);
+
+size_t list_size(struct list_node *root);

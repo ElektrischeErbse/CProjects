@@ -11,6 +11,7 @@ struct list_node *create_list_node(void *data)
     node->data = data;
     node->next = node;
     node->prev = node;
+    node->size = 0;
     return node;
 }
 
@@ -33,6 +34,7 @@ struct list_node *list_push_back(struct list_node *root, void *data)
     node->prev = tail;
     node->next = root;
     root->prev = node;
+    root->size += 1;
     return root;
 }
 
@@ -50,6 +52,7 @@ struct list_node *list_push_front(struct list_node *root, void *data)
     node->prev = root;
     node->next = head;
     head->prev = node;
+    root->size += 1;
     return root;
 }
 
@@ -70,10 +73,10 @@ struct list_node *list_move_to_front(struct list_node *root, struct list_node *n
     return root;
 }
 
-void destroy_linked_list(struct list_node *root)
+struct list_node *destroy_linked_list(struct list_node *root)
 {
     if (root == NULL) {
-        return;
+        return NULL;
     }
     struct list_node *p = root->next;
     while (p != root) {
@@ -88,6 +91,7 @@ void destroy_linked_list(struct list_node *root)
         free(p);
     }
     root = NULL;
+    return root;
 }
 
 void traversal_linked_list(struct list_node *root, func f)
@@ -105,4 +109,12 @@ void traversal_linked_list(struct list_node *root, func f)
         }
         p = p->next;
     }
+}
+
+size_t list_size(struct list_node *root)
+{
+    if (root == NULL) {
+        return 0;
+    }
+    return root->size;
 }
