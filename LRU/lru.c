@@ -72,6 +72,7 @@ typedef struct Data {
     size_t count;
 } Data;
 
+#ifdef LRU_ENABLE
 size_t LRU_GET(HashTable *hash_table, LinkedList *list, Word *word)
 {
     Value *value = hash_table_get(hash_table, word);
@@ -90,6 +91,7 @@ void LRU_PUT(HashTable *hash_table, LinkedList *list, Word *word, size_t count)
 
     // 2. 创建链表节点数据 Data
     Data *data = malloc(sizeof(Data));
+    // data 中的word不在动态分配
     data->word = key;
     data->count = count;
 
@@ -104,9 +106,9 @@ void LRU_PUT(HashTable *hash_table, LinkedList *list, Word *word, size_t count)
     // 5. 插入哈希表
     hash_table_put(hash_table, key, value);
 
-    // 6. 如果超过容量，淘汰尾部（最关键的修复在这里！）
+    // 6. 如果超过容量，淘汰尾部
     if (list_size(list) > LRU_SIZE) {
-        ListNode *tail = list->root->prev;
+        ListNode *tail = list_back(list);
         Data *tail_data = tail->data;
 
         hash_table_remove(hash_table, tail_data->word);
@@ -114,6 +116,16 @@ void LRU_PUT(HashTable *hash_table, LinkedList *list, Word *word, size_t count)
         list_pop_back(list);
     }
 }
+#else
+size_t LRU_GET(HashTable *hash_table, LinkedList *list, Word *word)
+{
+    return 0;
+}
+
+void LRU_PUT(HashTable *hash_table, LinkedList *list, Word *word, size_t count)
+{
+}
+#endif
 
 size_t hash_func(const void *key)
 {
@@ -149,8 +161,7 @@ void free_value(void *value)
 
 void free_data(void *data)
 {
-    Data *d = (Data *) data;
-    free(d);
+    free(data);
 }
 
 int main(int argc, char **argv)
@@ -206,3 +217,8 @@ int main(int argc, char **argv)
     close(fd);
     return 0;
 }
+// 不开启LRU
+// ./bin/lru LRU/shakespeare.txt  18.88s user 0.17s system 104% cpu 18.150 total
+
+// 开启LRU
+// ./bin/lru LRU/shakespeare.txt  6.35s user 0.05s system 86% cpu 7.374 total

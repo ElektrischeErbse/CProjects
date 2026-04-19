@@ -187,7 +187,9 @@ static void traverse_handle(void *data, void *arg)
 
 void hash_table_traverse(HashTable *ht, Visit visit, void *arg)
 {
-    if (!ht || !visit) return;
+    if (!ht || !visit) {
+        return;
+    }
     TraverseArg targ = {visit, arg};
     for (size_t i = 0; i < ht->capacity; i++) {
         traversal_linked_list_ex(ht->table[i], traverse_handle, &targ);

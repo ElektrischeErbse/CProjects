@@ -124,7 +124,6 @@ void destroy_linked_list(LinkedList **linked_list)
     while (p != root && p) {
         if (list->free_data) {
             list->free_data(p->data);
-            p->data = NULL;
         }
         ListNode *next = p->next;
         free(p);
@@ -167,10 +166,7 @@ void traversal_linked_list_ex(LinkedList *linked_list, Handle handle, void *arg)
 
 size_t list_size(LinkedList *linked_list)
 {
-    if (linked_list == NULL) {
-        return 0;
-    }
-    return linked_list->size;
+    return linked_list ? linked_list->size : 0;
 }
 
 ListNode *list_front(LinkedList *linked_list)
