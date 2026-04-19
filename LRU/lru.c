@@ -2,7 +2,9 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <hash_table.h>
 #include <linked_list.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,21 +13,21 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-struct Word {
+typedef struct Word {
     char data[32];
-};
+} Word;
 
-struct Word create_word(struct string_view sv)
+Word create_word(StringView sv)
 {
-    struct Word word = {0};
+    Word word = {0};
     assert(sv.size < sizeof(word) - 1);
     memcpy(word.data, sv.data, sv.size);
     return word;
 }
 
-struct Word word_normal(struct Word *word)
+Word word_normal(Word *word)
 {
-    struct Word result = {0};
+    Word result = {0};
     char *input = word->data;
     char *output = result.data;
     while (*input) {
@@ -39,16 +41,16 @@ struct Word word_normal(struct Word *word)
 }
 
 // 耗时函数
-size_t word_count(struct string_view content, struct Word *search_word)
+size_t word_count(StringView content, Word *search_word)
 {
     size_t result = 0;
     while (content.size > 0) {
-        struct string_view line = trim_sv(parse_line(&content, '\n'));
+        StringView line = trim_sv(parse_line_sv(&content, '\n'));
         while (line.size > 0) {
-            struct string_view word_sv = trim_sv(parse_line(&line, ' '));
+            StringView word_sv = trim_sv(parse_line_sv(&line, ' '));
             if (word_sv.size > 0) {
-                struct Word word = create_word(word_sv);
-                struct Word normal_word = word_normal(&word);
+                Word word = create_word(word_sv);
+                Word normal_word = word_normal(&word);
                 if (strcmp(normal_word.data, search_word->data) == 0) {
                     result++;
                 }
@@ -58,7 +60,98 @@ size_t word_count(struct string_view content, struct Word *search_word)
     return result;
 }
 
+#define LRU_SIZE 512
 
+typedef struct Value {
+    size_t count;
+    ListNode *node;
+} Value;
+
+typedef struct Data {
+    Word *word;
+    size_t count;
+} Data;
+
+size_t LRU_GET(HashTable *hash_table, LinkedList *list, Word *word)
+{
+    Value *value = hash_table_get(hash_table, word);
+    if (value) {
+        list_move_node_to_front(list, value->node);
+        return value->count;
+    }
+    return 0;
+}
+
+void LRU_PUT(HashTable *hash_table, LinkedList *list, Word *word, size_t count)
+{
+    // 1. 先创建要存入哈希表的 key（必须堆分配）
+    Word *key = malloc(sizeof(Word));
+    memcpy(key->data, word->data, sizeof(key->data));
+
+    // 2. 创建链表节点数据 Data
+    Data *data = malloc(sizeof(Data));
+    data->word = key;
+    data->count = count;
+
+    // 3. 加入链表头部
+    list_push_front(list, data);
+
+    // 4. 创建哈希表 value
+    Value *value = malloc(sizeof(Value));
+    value->count = count;
+    value->node = list_front(list);
+
+    // 5. 插入哈希表
+    hash_table_put(hash_table, key, value);
+
+    // 6. 如果超过容量，淘汰尾部（最关键的修复在这里！）
+    if (list_size(list) > LRU_SIZE) {
+        ListNode *tail = list->root->prev;
+        Data *tail_data = tail->data;
+
+        hash_table_remove(hash_table, tail_data->word);
+
+        list_pop_back(list);
+    }
+}
+
+size_t hash_func(const void *key)
+{
+    const Word *word = (const Word *) key;
+    const char *s = word->data;
+    size_t hash = 5381;
+    while (*s != '\0') {
+        hash = ((hash << 5) + hash) + *s;
+        s++;
+    }
+    return hash;
+}
+
+int equal_data(const void *lsh, const void *rsh)
+{
+    Data *l = (Data *) lsh;
+    Data *r = (Data *) rsh;
+    if (strcmp(l->word->data, r->word->data) == 0) {
+        return 0;
+    }
+    return 1;
+}
+
+void free_key(void *key)
+{
+    free(key);
+}
+
+void free_value(void *value)
+{
+    free(value);
+}
+
+void free_data(void *data)
+{
+    Data *d = (Data *) data;
+    free(d);
+}
 
 int main(int argc, char **argv)
 {
@@ -84,19 +177,31 @@ int main(int argc, char **argv)
         printf("ERROR: Could not mmap file %s: %s", file_path, strerror(errno));
         exit(1);
     }
-    struct string_view sv = create_sv(content_data, content_size);
+    HashTable *ht = create_hash_table(LRU_SIZE, hash_func, equal_data, free_key, free_value);
+    LinkedList *list = create_linked_list(NULL, free_data, equal_data);
+    StringView sv = create_sv(content_data, content_size);
     while (sv.size > 0) {
-        struct string_view line = trim_sv(parse_line(&sv, '\n'));
+        StringView line = trim_sv(parse_line_sv(&sv, '\n'));
         while (line.size > 0) {
-            struct string_view word_sv = trim_sv(parse_line(&line, ' '));
+            StringView word_sv = trim_sv(parse_line_sv(&line, ' '));
             if (word_sv.size > 0) {
-                struct Word word = create_word(word_sv);
-                struct Word search_word = word_normal(&word);
-                struct string_view content = create_sv(content_data, content_size);
-                printf("[%s]:(%zu)\n", search_word.data, word_count(content, &search_word));
+                Word word = create_word(word_sv);
+                Word search_word = word_normal(&word);
+                StringView content = create_sv(content_data, content_size);
+                // printf("[%s]:(%zu)\n", search_word.data, word_count(content, &search_word));
+                size_t count = LRU_GET(ht, list, &search_word);
+                if (count == 0) {
+                    size_t c = word_count(content, &search_word);
+                    printf("[%s]:(%zu)\n", search_word.data, c);
+                    LRU_PUT(ht, list, &search_word, c);
+                } else {
+                    printf("[%s]:(%zu)\n", search_word.data, count);
+                }
             }
         }
     }
+    destroy_linked_list(&list);
+    destroy_hash_table(&ht);
     munmap(content_data, content_size);
     close(fd);
     return 0;

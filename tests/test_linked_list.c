@@ -1,31 +1,52 @@
+#include <assert.h>
 #include <linked_list.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-void callback(struct list_node *node)
+void handle_data(void *data)
 {
-    int *data = (int *) node->data;
-    printf("data = %d\n", *data);
+    int *d = (int *) data;
+    printf("data = %d\n", *d);
+}
+
+void free_data(void *data)
+{
+    if (data) {
+        free(data);
+    }
+}
+
+int equal_data(const void *lsh, const void *rsh)
+{
+    int *l = (int *) lsh;
+    int *r = (int *) rsh;
+    if (*l == *r) {
+        return 0;
+    }
+    return 1;
 }
 
 int main()
 {
-    struct list_node *root = create_linked_list();
-    int arr[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    LinkedList *list = create_linked_list(handle_data, free_data, equal_data);
+    int *arr[5] = {0};
     for (int i = 0; i < 5; ++i) {
-        root = list_push_back(root, &arr[i]);
+        arr[i] = malloc(sizeof(int));
+        *arr[i] = i + 1;
     }
-    printf("list size: %zu\n", list_size(root));
-    for (int i = 5; i < 10; ++i) {
-        root = list_push_front(root, &arr[i]);
-    }
-    printf("list size: %zu\n", list_size(root));
-    traversal_linked_list(root, &callback);
-    root = list_move_to_front(root, root->prev);
-    printf("================================\n");
-    traversal_linked_list(root, callback);
-    struct list_node *find_node = list_find(root, &arr[5]);
-    printf("find data: %d\n", *(int *) find_node->data);
-    root = destroy_linked_list(root);
-    printf("list size: %zu\n", list_size(root));
+    list_push_back(list, arr[0]);
+    list_push_back(list, arr[1]);
+    list_push_back(list, arr[2]);
+    list_push_front(list, arr[3]);
+    list_push_front(list, arr[4]);
+
+    assert(list_size(list) == 5);
+    ListNode *node = list_find(list, arr[3]);
+    assert(*(int *) node->data == *arr[3]);
+    traversal_linked_list(list);
+    list_move_node_to_front(list, node);
+    printf("======================\n");
+    traversal_linked_list(list);
+    destroy_linked_list(&list);
     return 0;
 }

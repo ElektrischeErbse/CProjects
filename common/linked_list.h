@@ -2,29 +2,45 @@
 
 #include <stddef.h>
 
-struct list_node {
+typedef struct ListNode {
     void *data;
+    struct ListNode *prev;
+    struct ListNode *next;
+} ListNode;
+
+typedef void (*HandleData)(void *data);
+typedef void (*FreeData)(void *data);
+typedef int (*EqualData)(const void *lsh, const void *rsh);
+typedef void (*Handle)(void *data, void *arg);
+
+typedef struct LinkedList {
+    ListNode *root;
     size_t size;
-    struct list_node *prev;
-    struct list_node *next;
-};
+    HandleData handle_data;
+    FreeData free_data;
+    EqualData equal_data;
+} LinkedList;
 
-typedef void (*func)(struct list_node *node);
+LinkedList *create_linked_list(HandleData handle_data, FreeData free_data, EqualData equal_data);
 
-struct list_node *create_list_node(void *data);
+int list_push_back(LinkedList *linked_list, void *data);
 
-struct list_node *create_linked_list();
+int list_push_front(LinkedList *linked_list, void *data);
 
-struct list_node *list_push_back(struct list_node *root, void *data);
+int list_move_node_to_front(LinkedList *linked_list, ListNode *node);
 
-struct list_node *list_push_front(struct list_node *root, void *data);
+ListNode *list_find(LinkedList *linked_list, void *data);
 
-struct list_node *list_move_to_front(struct list_node *root, struct list_node *node);
+void destroy_linked_list(LinkedList **linked_list);
 
-struct list_node *list_find(struct list_node *root, void *data);
+void traversal_linked_list(LinkedList *linked_list);
 
-struct list_node *destroy_linked_list(struct list_node *root);
+void traversal_linked_list_ex(LinkedList *linked_list, Handle handle, void *arg);
 
-void traversal_linked_list(struct list_node *root, func f);
+size_t list_size(LinkedList *linked_list);
 
-size_t list_size(struct list_node *root);
+ListNode *list_front(LinkedList *linked_list);
+
+ListNode *list_back(LinkedList *linked_list);
+
+int list_pop_back(LinkedList *linked_list);

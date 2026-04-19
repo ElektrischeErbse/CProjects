@@ -2,15 +2,15 @@
 
 #include <stddef.h>
 
-struct string_view {
+typedef struct StringView {
     const char *data;
     size_t size;
-};
+} StringView;
 
-struct string_view create_sv(const char *data, size_t size);
+StringView create_sv(const char *data, size_t size);
 
-struct string_view parse_line(struct string_view *sv, char delimiter);
+StringView parse_line_sv(StringView *sv, char delimiter);
 
-struct string_view trim_sv(struct string_view sv);
+StringView trim_sv(StringView sv);
 
-void print_sv(struct string_view sv);
+void print_sv(StringView sv);

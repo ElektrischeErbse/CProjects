@@ -2,17 +2,17 @@
 #include <ctype.h>
 #include <stdio.h>
 
-struct string_view create_sv(const char *data, size_t size)
+StringView create_sv(const char *data, size_t size)
 {
-    struct string_view sv;
+    StringView sv;
     sv.data = data;
     sv.size = size;
     return sv;
 }
 
-struct string_view parse_line(struct string_view *sv, char delimiter)
+StringView parse_line_sv(StringView *sv, char delimiter)
 {
-    struct string_view result;
+    StringView result;
     result.data = sv->data;
     for (size_t i = 0; i < sv->size; ++i) {
         if (sv->data[i] == delimiter) {
@@ -27,7 +27,7 @@ struct string_view parse_line(struct string_view *sv, char delimiter)
     return result;
 }
 
-struct string_view trim_sv(struct string_view sv)
+StringView trim_sv(StringView sv)
 {
     const char *left = sv.data;
     const char *right = sv.data + sv.size;
@@ -52,7 +52,7 @@ struct string_view trim_sv(struct string_view sv)
     return sv;
 }
 
-void print_sv(struct string_view sv)
+void print_sv(StringView sv)
 {
     printf("[%.*s]\n", (int) sv.size, sv.data);
 }

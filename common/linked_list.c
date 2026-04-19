@@ -1,87 +1,108 @@
 #include "linked_list.h"
+#include <assert.h>
 #include <stddef.h>
 #include <stdlib.h>
 
-struct list_node *create_list_node(void *data)
+ListNode *create_list_node(void *data)
 {
-    struct list_node *node = (struct list_node *) malloc(sizeof(struct list_node));
+    ListNode *node = malloc(sizeof(ListNode));
     if (node == NULL) {
         return NULL;
     }
     node->data = data;
     node->next = node;
     node->prev = node;
-    node->size = 0;
     return node;
 }
 
-struct list_node *create_linked_list()
+LinkedList *create_linked_list(HandleData handle_data, FreeData free_data, EqualData equal_data)
 {
-    return create_list_node(NULL);
+    LinkedList *linked_list = malloc(sizeof(LinkedList));
+    if (linked_list == NULL) {
+        return linked_list;
+    }
+    linked_list->handle_data = handle_data;
+    linked_list->free_data = free_data;
+    linked_list->equal_data = equal_data;
+    linked_list->size = 0;
+    ListNode *node = create_list_node(NULL);
+    assert(node != NULL);
+    linked_list->root = node;
+    return linked_list;
 }
 
-struct list_node *list_push_back(struct list_node *root, void *data)
+int list_push_back(LinkedList *linked_list, void *data)
 {
-    if (root == NULL) {
-        return NULL;
+    if (linked_list == NULL) {
+        return -1;
     }
-    struct list_node *node = create_list_node(data);
+    ListNode *node = create_list_node(data);
     if (node == NULL) {
-        return root;
+        return -1;
     }
-    struct list_node *tail = root->prev;
+    ListNode *root = linked_list->root;
+    assert(root != NULL);
+    ListNode *tail = root->prev;
     tail->next = node;
     node->prev = tail;
-    node->next = root;
     root->prev = node;
-    root->size += 1;
-    return root;
+    node->next = root;
+    linked_list->size += 1;
+    return 0;
 }
 
-struct list_node *list_push_front(struct list_node *root, void *data)
+int list_push_front(LinkedList *linked_list, void *data)
 {
-    if (root == NULL) {
-        return NULL;
+    if (linked_list == NULL) {
+        return -1;
     }
-    struct list_node *node = create_list_node(data);
+    ListNode *node = create_list_node(data);
     if (node == NULL) {
-        return root;
+        return -1;
     }
-    struct list_node *head = root->next;
+    ListNode *root = linked_list->root;
+    assert(root != NULL);
+    ListNode *header = root->next;
+    header->prev = node;
+    node->next = header;
     root->next = node;
     node->prev = root;
-    node->next = head;
-    head->prev = node;
-    root->size += 1;
-    return root;
+    linked_list->size += 1;
+    return 0;
 }
 
-struct list_node *list_move_to_front(struct list_node *root, struct list_node *node)
+int list_move_node_to_front(LinkedList *linked_list, ListNode *node)
 {
-    if (root == NULL || node == NULL) {
-        return root;
+    if (linked_list == NULL || node == NULL) {
+        return -1;
     }
-    struct list_node *left = node->prev;
-    struct list_node *right = node->next;
-    struct list_node *head = root->next;
+    ListNode *root = linked_list->root;
+    assert(root != NULL);
+    ListNode *left = node->prev;
+    ListNode *right = node->next;
     left->next = right;
     right->prev = left;
-    head->prev = node;
-    node->next = head;
+    ListNode *header = root->next;
+    header->prev = node;
+    node->next = header;
     root->next = node;
     node->prev = root;
-    return root;
+    return 0;
 }
 
-struct list_node *list_find(struct list_node *root, void *data)
+ListNode *list_find(LinkedList *linked_list, void *data)
 {
-    if (root == NULL) {
+    if (linked_list == NULL) {
         return NULL;
     }
-    struct list_node *p = root->next;
+    ListNode *root = linked_list->root;
+    assert(root != NULL);
+    ListNode *p = root->next;
     while (p != root && p) {
-        void *node_data = p->data;
-        if (node_data == data) {
+        void *lsh = p->data;
+        void *rsh = data;
+        EqualData equal_data = linked_list->equal_data;
+        if (equal_data && equal_data(lsh, rsh) == 0) {
             return p;
         }
         p = p->next;
@@ -89,42 +110,105 @@ struct list_node *list_find(struct list_node *root, void *data)
     return NULL;
 }
 
-struct list_node *destroy_linked_list(struct list_node *root)
+void destroy_linked_list(LinkedList **linked_list)
 {
-    if (root == NULL) {
-        return NULL;
+    if (linked_list == NULL || *linked_list == NULL) {
+        return;
     }
-    struct list_node *p = root->next;
-    while (p != root && p) {
-        struct list_node *next_node = p->next;
-        free(p);
-        p = next_node;
-    }
-    if (p) {
-        free(p);
-    }
-    root = NULL;
-    return root;
-}
-
-void traversal_linked_list(struct list_node *root, func f)
-{
+    LinkedList *list = *linked_list;
+    ListNode *root = list->root;
     if (root == NULL) {
         return;
     }
-    struct list_node *p = root->next;
+    ListNode *p = root->next;
     while (p != root && p) {
-        if (f) {
-            f(p);
+        if (list->free_data) {
+            list->free_data(p->data);
+            p->data = NULL;
+        }
+        ListNode *next = p->next;
+        free(p);
+        p = next;
+    }
+    free(root);
+    free(list);
+    *linked_list = NULL;
+}
+
+void traversal_linked_list(LinkedList *linked_list)
+{
+    if (linked_list == NULL) {
+        return;
+    }
+    ListNode *root = linked_list->root;
+    assert(root != NULL);
+    ListNode *p = root->next;
+    while (p != root && p) {
+        if (linked_list->handle_data) {
+            linked_list->handle_data(p->data);
         }
         p = p->next;
     }
 }
 
-size_t list_size(struct list_node *root)
+void traversal_linked_list_ex(LinkedList *linked_list, Handle handle, void *arg)
 {
-    if (root == NULL) {
+    if (linked_list == NULL || handle == NULL) {
+        return;
+    }
+    ListNode *root = linked_list->root;
+    assert(root != NULL);
+    ListNode *p = root->next;
+    while (p != root && p) {
+        handle(p->data, arg);
+        p = p->next;
+    }
+}
+
+size_t list_size(LinkedList *linked_list)
+{
+    if (linked_list == NULL) {
         return 0;
     }
-    return root->size;
+    return linked_list->size;
+}
+
+ListNode *list_front(LinkedList *linked_list)
+{
+    if (linked_list == NULL) {
+        return NULL;
+    }
+    ListNode *root = linked_list->root;
+    assert(root != NULL);
+    return root->next;
+}
+
+ListNode *list_back(LinkedList *linked_list)
+{
+    if (linked_list == NULL) {
+        return NULL;
+    }
+    ListNode *root = linked_list->root;
+    assert(root != NULL);
+    return root->prev;
+}
+
+int list_pop_back(LinkedList *linked_list)
+{
+    if (linked_list == NULL) {
+        return -1;
+    }
+    ListNode *root = linked_list->root;
+    assert(root != NULL);
+    ListNode *tail = root->prev;
+    ListNode *left = tail->prev;
+    ListNode *right = tail->next;
+    left->next = right;
+    right->prev = left;
+    if (linked_list->free_data) {
+        linked_list->free_data(tail->data);
+    }
+    free(tail);
+    linked_list->size -= 1;
+    return 0;
 }
