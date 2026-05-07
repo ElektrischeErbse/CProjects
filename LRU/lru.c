@@ -45,9 +45,9 @@ size_t word_count(StringView content, Word *search_word)
 {
     size_t result = 0;
     while (content.size > 0) {
-        StringView line = trim_sv(parse_line_sv(&content, '\n'));
+        StringView line = trim_sv(split_sv(&content, '\n'));
         while (line.size > 0) {
-            StringView word_sv = trim_sv(parse_line_sv(&line, ' '));
+            StringView word_sv = trim_sv(split_sv(&line, ' '));
             if (word_sv.size > 0) {
                 Word word = create_word(word_sv);
                 Word normal_word = word_normal(&word);
@@ -192,9 +192,9 @@ int main(int argc, char **argv)
     LinkedList *list = create_linked_list(NULL, free_data, equal_data);
     StringView sv = create_sv(content_data, content_size);
     while (sv.size > 0) {
-        StringView line = trim_sv(parse_line_sv(&sv, '\n'));
+        StringView line = trim_sv(split_sv(&sv, '\n'));
         while (line.size > 0) {
-            StringView word_sv = trim_sv(parse_line_sv(&line, ' '));
+            StringView word_sv = trim_sv(split_sv(&line, ' '));
             if (word_sv.size > 0) {
                 Word word = create_word(word_sv);
                 Word search_word = word_normal(&word);
